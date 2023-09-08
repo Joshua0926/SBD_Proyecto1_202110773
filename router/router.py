@@ -59,7 +59,27 @@ def move_data_from_temp_to_permanent_table(connection):
     connection.execute(stmt)
 
 
-@user.post("/api/partido")
+
+
+@user.post("/crearmodelo")
+async def create_model():
+
+    # Empezar la conexión con la base de datos y crear las tablas
+    with engine.begin() as conn1:
+        create_partido_table(conn1)  # Esto crea la tabla Partido si no existe
+
+
+@user.delete("/eliminarmodelo")
+async def delete_model():
+
+    # Empezar la conexión con la base de datos y crear las tablas
+    with engine.begin() as conn1:
+        #Eliminar la tabla Partido si existe
+        if engine.has_table('Partido'):
+            conn1.execute("DROP TABLE Partido")
+       
+
+@user.post("/cargartabtemp")
 async def create_partido():
 
     # Leer el archivo CSV y cargarlo en la tabla temporal en MySQL
@@ -93,9 +113,3 @@ async def create_partido():
 
     return "Success"
 
-
-
-
-@user.put("/api/user")
-def update_user():
-    pass
