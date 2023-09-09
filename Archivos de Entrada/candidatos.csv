@@ -1,4 +1,4 @@
-﻿id,nombres,fecha_nacimiento,partido_id,cargo_id,
+﻿id_candidato,nombre,fecha_nacimiento,id_partido,id_cargo,
 -1,NULO,1/01/2023,-1,-1,
 1,ZURY MAYTE RIOS SOSA,13/02/1973,1,1,
 2,SANDRA JULIETA TORRES CASANOVA,26/12/1955,2,1,
