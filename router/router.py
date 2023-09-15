@@ -21,8 +21,8 @@ def create_temp_partido_table(connection):
         """
         CREATE TEMPORARY TABLE tmp_Partido (
             id_partido INT PRIMARY KEY,
-            nombrePartido VARCHAR(255),
-            Siglas VARCHAR(255),
+            nombrePartido VARCHAR(50),
+            Siglas VARCHAR(10),
             Fundacion DATE
         )
         """
@@ -40,8 +40,8 @@ def create_partido_table(connection):
         create_table_sql = """
             CREATE TABLE Partido (
                 id_partido INT PRIMARY KEY,
-                nombrePartido VARCHAR(255),
-                Siglas VARCHAR(255),
+                nombrePartido VARCHAR(50),
+                Siglas VARCHAR(10),
                 Fundacion DATE
             )
         """
@@ -67,13 +67,13 @@ def create_temp_ciudadano_table(connection):
     connection.execute(
         """
         CREATE TEMPORARY TABLE tmp_Ciudadano (
-            DPI VARCHAR(255) PRIMARY KEY,
-            Nombre VARCHAR(255),
-            Apellido VARCHAR(255),
-            Direccion VARCHAR(255),
-            Telefono VARCHAR(255),
+            DPI VARCHAR(13) PRIMARY KEY,
+            Nombre VARCHAR(50),
+            Apellido VARCHAR(50),
+            Direccion VARCHAR(100),
+            Telefono VARCHAR(10),
             Edad INT,
-            Genero VARCHAR(255)
+            Genero VARCHAR(1)
         )
         """
     )
@@ -88,13 +88,13 @@ def create_ciudadano_table(connection):
     if not engine.has_table('Ciudadano'):
         create_table_sql = """
             CREATE TABLE Ciudadano (
-                DPI VARCHAR(255) PRIMARY KEY,
-                Nombre VARCHAR(255),
-                Apellido VARCHAR(255),
-                Direccion VARCHAR(255),
-                Telefono VARCHAR(255),
+                DPI VARCHAR(13) PRIMARY KEY,
+                Nombre VARCHAR(50),
+                Apellido VARCHAR(50),
+                Direccion VARCHAR(100),
+                Telefono VARCHAR(10),
                 Edad INT,
-                Genero VARCHAR(255)
+                Genero VARCHAR(1)
             )
         """
         connection.execute(create_table_sql)
@@ -118,7 +118,7 @@ def create_temp_departamento_table(connection):
         """
         CREATE TEMPORARY TABLE tmp_Departamento (
             id_departamento INT PRIMARY KEY,
-            nombre VARCHAR(255)
+            nombre VARCHAR(20)
         )
         """
     )
@@ -134,7 +134,7 @@ def create_departamento_table(connection):
         create_table_sql = """
             CREATE TABLE Departamento (
                 id_departamento INT PRIMARY KEY,
-                nombre VARCHAR(255)
+                nombre VARCHAR(20)
             )
         """
         connection.execute(create_table_sql)
@@ -198,7 +198,7 @@ def create_temp_cargo_table(connection):
         """
         CREATE TEMPORARY TABLE tmp_Cargo (
             id_cargo INT PRIMARY KEY,
-            cargo VARCHAR(255)
+            cargo VARCHAR(40)
         )
         """
     )
@@ -214,7 +214,7 @@ def create_cargo_table(connection):
         create_table_sql = """
             CREATE TABLE Cargo (
                 id_cargo INT PRIMARY KEY,
-                cargo VARCHAR(255)
+                cargo VARCHAR(40)
             )
         """
         connection.execute(create_table_sql)
@@ -238,7 +238,7 @@ def create_temp_candidato_table(connection):
         """
         CREATE TEMPORARY TABLE tmp_Candidato (
             id_candidato INT PRIMARY KEY,
-            nombre VARCHAR(255),
+            nombre VARCHAR(50),
             fecha_nacimiento DATE,
             id_partido INT,
             id_cargo INT
@@ -257,7 +257,7 @@ def create_candidato_table(connection):
         create_table_sql = """
             CREATE TABLE Candidato (
                 id_candidato INT PRIMARY KEY,
-                nombre VARCHAR(255),
+                nombre VARCHAR(50),
                 fecha_nacimiento DATE,
                 id_partido INT,
                 id_cargo INT,
@@ -289,7 +289,7 @@ def create_temp_voto_table(connection):
         CREATE TEMPORARY TABLE tmp_Voto (
             id_voto INT,
             id_candidato INT,
-            dpi VARCHAR(255),
+            dpi VARCHAR(13),
             id_mesa INT,
             fecha_hora DATETIME
         )
@@ -307,7 +307,7 @@ def create_voto_table(connection):
         create_table_sql = """
             CREATE TABLE Voto (
                 id_voto INT PRIMARY KEY,
-                dpi VARCHAR(255),
+                dpi VARCHAR(13),
                 id_mesa INT,
                 fecha_hora DATETIME,
                 FOREIGN KEY (dpi) REFERENCES Ciudadano(DPI),
@@ -683,23 +683,16 @@ async def get_candidatos_alcalde():
 
 # Definir un modelo para la respuesta
 class CandidatoResponse4:
-    def __init__(self, partido: str, cantidad_presidentes: int, cantidad_vicepresidentes: int, cantidad_diputados: int, cantidad_alcaldes: int):
+    def __init__(self, partido: str, total_candidatos: int):
         self.partido = partido
-        self.cantidad_presidentes = cantidad_presidentes
-        self.cantidad_vicepresidentes = cantidad_vicepresidentes
-        self.cantidad_diputados = cantidad_diputados
-        self.cantidad_alcaldes = cantidad_alcaldes
+        self.total_candidatos = total_candidatos
 
 @user.get("/consulta4")
 async def get_candidatos_por_partido():
  
-    # Consulta SQL para obtener la cantidad de candidatos por partido y cargo
+    # Consulta SQL para obtener el total de candidatos por partido
     consulta_sql = text("""
-        SELECT p.nombrePartido AS partido, 
-            SUM(CASE WHEN c.id_cargo = 1 THEN 1 ELSE 0 END) AS cantidad_presidentes,
-            SUM(CASE WHEN c.id_cargo = 2 THEN 1 ELSE 0 END) AS cantidad_vicepresidentes,
-            SUM(CASE WHEN c.id_cargo IN (3, 4, 5) THEN 1 ELSE 0 END) AS cantidad_diputados,
-            SUM(CASE WHEN c.id_cargo = 6 THEN 1 ELSE 0 END) AS cantidad_alcaldes
+        SELECT p.nombrePartido AS partido, COUNT(*) AS total_candidatos
         FROM Candidato c
         JOIN Partido p ON c.id_partido = p.id_partido
         GROUP BY p.nombrePartido
@@ -713,10 +706,7 @@ async def get_candidatos_por_partido():
     candidatos_por_partido = [
         CandidatoResponse4(
             partido=row["partido"],
-            cantidad_presidentes=row["cantidad_presidentes"],
-            cantidad_vicepresidentes=row["cantidad_vicepresidentes"],
-            cantidad_diputados=row["cantidad_diputados"],
-            cantidad_alcaldes=row["cantidad_alcaldes"]
+            total_candidatos=row["total_candidatos"]
         )
         for row in resultados
     ]
@@ -776,7 +766,7 @@ def get_votos_nulos():
 
             cantidad_votos_nulos = resultado["cantidad_votos_nulos"]
 
-            return {"cantidad_votos_nulos": cantidad_votos_nulos}
+            return {"cantidad_votos_nulos": cantidad_votos_nulos/5, "Total_votos_nulos": cantidad_votos_nulos }
     except Exception as e:
         return {"error": str(e)}
     
